@@ -15,11 +15,34 @@
 
 <x-breadcrumbs :items="$breadcrumbs" />
 
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 mt-6">
 
-  {{-- Left: existing collapsible sidenav --}}
-  <aside class="lg:col-span-3">
-    <div class="lg:sticky lg:top-24">
+  {{-- Left: collapsible sidenav (collapsed by default on mobile, always visible on desktop) --}}
+  <aside class="lg:col-span-3" x-data="{ navOpen: false }">
+    {{-- Mobile toggle button --}}
+    <button
+        type="button"
+        @click="navOpen = !navOpen"
+        class="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5
+               px-4 py-3 text-sm font-medium text-slate-200 lg:hidden"
+    >
+        <span>{{ __('messages.catalog') }}</span>
+        <svg
+            class="h-4 w-4 transition-transform duration-150"
+            :class="navOpen ? 'rotate-180' : ''"
+            fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+        >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+    </button>
+
+    {{-- Sidenav content: hidden on mobile until toggled, always visible on desktop --}}
+    <div
+        x-show="navOpen"
+        x-transition
+        x-cloak
+        class="mt-2 lg:mt-0 lg:!block lg:sticky lg:top-24"
+    >
       @include('catalog._sidenav', [
         'catalog'    => $catalog ?? null,
         'activeSlug' => $slug ?? null,

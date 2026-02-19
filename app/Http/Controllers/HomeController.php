@@ -15,6 +15,7 @@ class HomeController extends Controller
 
         return view('home', [
             'newAdditions' => $newAdditions,
+            'introNav' => true,
         ]);
     }
 }

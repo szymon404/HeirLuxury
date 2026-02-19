@@ -55,6 +55,17 @@ class ImportLV extends Command
         'lv' => 'louis-vuitton',
         'chanel' => 'chanel',
         'dior' => 'dior',
+        'gucci' => 'gucci',
+        'amiri' => 'amiri',
+        'celine' => 'celine',
+        'givenchy' => 'givenchy',
+        'mcqueen' => 'mcqueen',
+        'moncler' => 'moncler',
+        'nike' => 'nike',
+        'offwhite' => 'offwhite',
+        'philippplein' => 'philipp-plein',
+        'versace' => 'versace',
+        'yeezy' => 'yeezy',
     ];
 
     /**

@@ -17,7 +17,9 @@
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-50 antialiased">
 
-    @include('layouts.navbar')
+    @include('layouts.navbar', ['introNav' => $introNav ?? false])
+
+    @yield('before-main')
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         @yield('content')

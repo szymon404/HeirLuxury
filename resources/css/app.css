@@ -17,7 +17,13 @@
         /* Surface tokens used by mega menu + layout */
         --surface: #020617; /* close to bg-slate-950 */
         --thin: rgba(148, 163, 184, 0.35);
-        --header-h: 4rem; /* matches ~lg navbar height */
+        --header-h: 3.5rem; /* h-14 mobile navbar height */
+    }
+
+    @media (min-width: 1024px) {
+        :root {
+            --header-h: 4rem; /* lg:h-16 desktop navbar height */
+        }
     }
 
     body {
@@ -268,13 +274,20 @@
     /* ---------- Mobile sheet ---------- */
 
     .mobile-sheet {
-        @apply fixed bottom-0 inset-x-0 z-50 rounded-t-2xl
+        @apply fixed bottom-0 inset-x-0 rounded-t-2xl
       border-t border-yellow-500 bg-slate-950 text-slate-50 shadow-2xl;
+        z-index: 60;
     }
 
     .mobile-scroll {
         max-height: calc(100vh - 5rem);
         overflow-y: auto;
+    }
+
+    /* Mobile mega menu grid: 2 columns instead of 4 for narrow screens */
+    .mobile-mega-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        column-gap: 1.5rem;
     }
 
     /* ---------- Hero frieze (decorative band) ---------- */
@@ -297,16 +310,20 @@
 /* ---------- Scroll lock when mega menu open ---------- */
 
 body.is-menu-open {
-    position: fixed;
-    inset: 0;
-    overflow: hidden; /* keep the same scrollbar width/behavior */
+    overflow: hidden;
 }
 
 @layer components {
     /* ===== Catalog side nav ===== */
 
     .catalog-sidenav {
-        width: 260px;
+        width: 100%;
+    }
+
+    @media (min-width: 1024px) {
+        .catalog-sidenav {
+            width: 220px;
+        }
     }
 
     .catalog-sidenav-inner {
@@ -429,23 +446,149 @@ body.is-menu-open {
     display: none !important;
 }
 
-/* ---------- Loading Screen Animation ---------- */
+/* ---------- Intro Section Animations ---------- */
 
-@keyframes logoToHero {
+/* Phase 1: Text logo reveals left to right via clip-path */
+@keyframes introTextReveal {
     0% {
-        transform: scale(1) translateY(0);
-        opacity: 1;
+        opacity: 0;
+        clip-path: inset(0 100% 0 0);
     }
-    50% {
-        transform: scale(1.1) translateY(0);
+    15% {
         opacity: 1;
     }
     100% {
-        transform: scale(0.5) translateY(-30vh);
-        opacity: 0;
+        opacity: 1;
+        clip-path: inset(0 0% 0 0);
     }
 }
 
-.logo-animate {
-    animation: logoToHero 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+/* Phase 2: Background logo fades in with subtle scale to full opacity */
+@keyframes introLogoIn {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Phase 3: Navbar drops in from above */
+@keyframes navbarDropIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Phase 4: Scroll indicator bounce */
+@keyframes scrollBounce {
+    0%, 100% {
+        transform: translateY(0);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translateY(8px);
+        opacity: 1;
+    }
+}
+
+/* Intro text logo: compact, left-aligned, left-to-right reveal */
+.intro-text-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    will-change: opacity, clip-path;
+}
+
+@media (min-width: 640px) {
+    .intro-text-logo {
+        font-size: 0.85rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .intro-text-logo {
+        font-size: 1rem;
+    }
+}
+
+.intro-text-logo.is-visible {
+    animation: introTextReveal 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Background monogram logo: large, centered, PNG with contrast optimization */
+.intro-bg-logo {
+    position: absolute;
+    top: 50%;
+    left: calc(50% - 1.7rem);
+    transform: translate(-50%, -50%) scale(0.9);
+    width: 70%;
+    max-width: 800px;
+    min-width: 180px;
+    height: auto;
+    opacity: 0;
+    pointer-events: none;
+    will-change: opacity, transform;
+    image-rendering: -webkit-optimize-contrast;
+    filter: drop-shadow(0 0 60px rgba(250, 204, 21, 0.12))
+            drop-shadow(0 0 120px rgba(234, 179, 8, 0.06));
+}
+
+.intro-bg-logo.is-visible {
+    animation: introLogoIn 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Navbar intro animation */
+.lux-nav.is-intro-hidden {
+    opacity: 0;
+    transform: translateY(-100%);
+    pointer-events: none;
+}
+
+.lux-nav.is-intro-reveal {
+    animation: navbarDropIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    pointer-events: auto;
+}
+
+/* Scroll indicator chevron */
+.scroll-indicator {
+    animation: scrollBounce 2s ease-in-out infinite;
+}
+
+/* Subtitle fade-in with delay */
+.intro-subtitle {
+    opacity: 0;
+    will-change: opacity, transform;
+}
+
+.intro-subtitle.is-visible {
+    animation: introTextIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s forwards;
+}
+
+/* Scroll indicator fade-in */
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.intro-scroll-cue {
+    opacity: 0;
+    will-change: opacity;
+}
+
+.intro-scroll-cue.is-visible {
+    animation: fadeIn 0.6s ease 0.4s forwards;
 }

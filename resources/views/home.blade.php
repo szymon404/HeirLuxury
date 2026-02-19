@@ -1,16 +1,109 @@
+{{-- ABOUTME: Landing page with full-viewport intro animation and collections carousel.
+    ABOUTME: Intro sequence: text logo → background monogram → navbar drop-in → scroll indicator. --}}
+
 @extends('layouts.public')
 
-@section('content')
-{{-- Loading Screen --}}
-<x-loading-screen />
-
-<div
-    x-data="{ contentVisible: sessionStorage.getItem('hl_visited') ? true : false }"
-    x-init="window.addEventListener('loading-complete', () => { contentVisible = true }); setTimeout(() => contentVisible = true, 3500)"
-    :class="contentVisible ? 'opacity-100' : 'opacity-0'"
-    class="relative min-h-[calc(100vh-4rem)] flex items-center justify-center px-6 py-16 transition-opacity duration-700"
+{{-- Intro section lives outside <main> for clean viewport-height calculation --}}
+@section('before-main')
+<section
+    x-data="introSequence()"
+    x-init="start()"
+    class="relative flex items-center justify-center overflow-hidden bg-slate-950"
+    style="height: calc(100dvh - var(--header-h));"
 >
+    {{-- Background monogram logo --}}
+    <img
+        src="{{ asset('img/hl-logo-panel.png') }}"
+        alt=""
+        aria-hidden="true"
+        :class="bgLogoVisible ? 'is-visible' : ''"
+        class="intro-bg-logo"
+    >
 
+    {{-- Scroll-down indicator (inverted chevron) --}}
+    <div
+        x-show="scrollCueVisible"
+        x-transition:enter="transition-opacity duration-500"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-70"
+        x-transition:leave="transition-opacity duration-300"
+        x-transition:leave-start="opacity-70"
+        x-transition:leave-end="opacity-0"
+        class="absolute bottom-8 z-10 flex flex-col items-center gap-2"
+        style="left: calc(50% - 1.7rem); transform: translateX(-50%);"
+    >
+        <span class="text-[10px] tracking-[0.25em] uppercase text-white/40 font-medium">Scroll</span>
+        <svg
+            class="w-6 h-6 text-yellow-400/70 scroll-indicator"
+            fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+        >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+    </div>
+</section>
+
+{{-- Intro sequence script --}}
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('introSequence', () => ({
+        bgLogoVisible: false,
+        scrollCueVisible: false,
+        scrollHandler: null,
+
+        start() {
+            // Ensure page starts at top so collections panel doesn't peek
+            window.scrollTo(0, 0);
+
+            const hasVisited = sessionStorage.getItem('hl_visited');
+
+            if (hasVisited) {
+                // Return visit: show everything immediately, reveal navbar
+                this.bgLogoVisible = true;
+                this.scrollCueVisible = true;
+                window.dispatchEvent(new CustomEvent('intro-navbar-reveal'));
+                this.bindScrollDismiss();
+                return;
+            }
+
+            // First visit: phased animation
+            sessionStorage.setItem('hl_visited', 'true');
+
+            // Phase 1: Background logo fades in
+            setTimeout(() => {
+                this.bgLogoVisible = true;
+            }, 300);
+
+            // Phase 2: Navbar drops in
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('intro-navbar-reveal'));
+            }, 1400);
+
+            // Phase 3: Scroll indicator appears
+            setTimeout(() => {
+                this.scrollCueVisible = true;
+                this.bindScrollDismiss();
+            }, 2000);
+        },
+
+        bindScrollDismiss() {
+            // Hide scroll indicator once the user starts scrolling
+            this.scrollHandler = () => {
+                if (window.scrollY > 80) {
+                    this.scrollCueVisible = false;
+                    window.removeEventListener('scroll', this.scrollHandler);
+                }
+            };
+            window.addEventListener('scroll', this.scrollHandler, { passive: true });
+        }
+    }));
+});
+</script>
+@endsection
+
+@section('content')
+
+{{-- ========== COLLECTIONS PANEL (revealed on scroll) ========== --}}
+<section class="relative py-16">
     {{-- Decorative Background Glow --}}
     <div class="pointer-events-none absolute inset-0 opacity-40"
          style="background: radial-gradient(circle at 0% 0%, rgba(234,179,8,0.4), transparent 55%),
@@ -18,45 +111,36 @@
     </div>
 
     {{-- LUXURY HERO PANEL --}}
-    <section
+    <div
         class="relative w-full max-w-6xl mx-auto overflow-hidden rounded-3xl border border-white/10
                bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900/80
                px-10 py-14 sm:px-14 sm:py-16
                shadow-[0_40px_120px_rgba(0,0,0,0.85)] backdrop-blur-xl">
 
-        {{-- MAIN HERO CONTENT (CENTERED) --}}
-        <div class="relative max-w-3xl mx-auto text-center space-y-6">
-
-            {{-- HL Logo (appears after loading animation) --}}
-            <div
-                x-show="contentVisible"
-                x-transition:enter="transition ease-out duration-1000"
-                x-transition:enter-start="opacity-0 scale-75"
-                x-transition:enter-end="opacity-100 scale-100"
-                class="mb-6"
+        {{-- HL Logo --}}
+        <div class="mb-6 text-center">
+            <img
+                src="{{ asset('img/hl-logo-panel.png') }}"
+                alt="Heir Luxury"
+                class="w-20 h-20 mx-auto object-contain"
             >
-                <img
-                    src="{{ asset('img/hl-logo-panel.png') }}"
-                    alt="Heir Luxury"
-                    class="w-20 h-20 mx-auto object-contain"
-                >
-            </div>
+        </div>
 
+        <div class="relative max-w-3xl mx-auto text-center space-y-6">
             <p class="text-xs font-medium tracking-[0.38em] text-yellow-300 uppercase">
                 {{ __('messages.collection') }}
             </p>
 
-            <h1 class="text-4xl sm:text-5xl md:text-6xl font-semibold leading-tight text-slate-50">
+            <h2 class="text-4xl sm:text-5xl md:text-6xl font-semibold leading-tight text-slate-50">
                 {{ __('messages.hero_title') }}
                 <span class="block text-yellow-300">{{ __('messages.hero_subtitle') }}</span>
-            </h1>
+            </h2>
 
             <p class="max-w-xl mx-auto text-sm sm:text-base text-slate-300/80">
                 {{ __('messages.hero_description') }}
             </p>
 
             <div class="flex flex-wrap justify-center items-center gap-4 pt-2">
-
                 <a href="{{ route('catalog.grouped', ['locale' => app()->getLocale()]) }}"
                    class="inline-flex items-center rounded-full border border-white/20 px-6 py-2.5
                           text-sm font-medium text-slate-100 hover:border-yellow-300 hover:text-yellow-300
@@ -68,10 +152,7 @@
 
         {{-- ENTABLATURE / FRIEZE DIVIDER --}}
         <div class="relative mt-10">
-            {{-- main band --}}
             <div class="mx-auto h-px max-w-4xl bg-gradient-to-r from-transparent via-yellow-400/80 to-transparent"></div>
-
-            {{-- small decorative blocks in the center --}}
             <div class="absolute inset-x-0 -top-1 flex justify-center gap-1">
                 <span class="h-2 w-10 rounded-full bg-yellow-500/90"></span>
                 <span class="h-2 w-4 rounded-full bg-yellow-300/90"></span>
@@ -170,4 +251,6 @@
             </div>
         </div>
         @endif
+    </div>
+</section>
 @endsection
