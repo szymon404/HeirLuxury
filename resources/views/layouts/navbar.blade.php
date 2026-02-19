@@ -1,13 +1,48 @@
-{{-- resources/views/layouts/navbar.blade.php --}}
+{{-- ABOUTME: Main navigation bar with desktop mega menu, mobile slide-up sheet, and wishlist.
+    ABOUTME: Handles language switching, catalog navigation, and contact modal triggers. --}}
+
+@php
+    // Pre-load navigation data for the mobile sheet (desktop mega.blade.php loads its own)
+    $navData = \App\Models\Category::getNavigationData();
+    $configData = config('categories', []);
+
+    $womenSections = collect(!empty($navData['women']) ? $navData['women'] : ($configData['women'] ?? []));
+    $menSections = collect(!empty($navData['men']) ? $navData['men'] : ($configData['men'] ?? []));
+
+    $currentLocale = app()->getLocale();
+    $currentPath = request()->path();
+    // Remove current locale prefix to get the path
+    $pathWithoutLocale = preg_replace('#^(en|pl)/?#', '', $currentPath);
+@endphp
 
 <nav
-    x-data="{ open:false, mobile:false, gender:'women' }"
+    x-data="{
+        open: false,
+        mobile: false,
+        gender: 'women',
+        introPage: {{ isset($introNav) && $introNav ? 'true' : 'false' }},
+        introRevealed: {{ isset($introNav) && $introNav ? 'false' : 'true' }},
+        introAnimated: false
+    }"
     x-init="
         $watch('open',   value => document.body.classList.toggle('is-menu-open', value || mobile));
         $watch('mobile', value => document.body.classList.toggle('is-menu-open', value || open));
+        if (introPage && sessionStorage.getItem('hl_visited')) {
+            introRevealed = true;
+        }
+        if (!introRevealed) {
+            window.addEventListener('intro-navbar-reveal', () => {
+                introAnimated = true;
+                introRevealed = true;
+            }, { once: true });
+        }
     "
     @keydown.escape.window="open = false; mobile = false"
     class="lux-nav"
+    :class="{
+        'is-intro-hidden': !introRevealed,
+        'is-intro-reveal': introAnimated
+    }"
 >
     <div class="lux-nav-inner">
         {{-- LEFT: LOGO --}}
@@ -18,28 +53,20 @@
 
         {{-- CENTER: CATALOG LABEL (DESKTOP) --}}
         <button
-    type="button"
-    @click="open = !open"
-    :aria-expanded="open"
-    class="catalog-toggle"
->
-    <span class="catalog-line"></span>
-    <span class="catalog-label">{{ __('messages.catalog') }}</span>
-    <span class="catalog-line"></span>
-</button>
-
+            type="button"
+            @click="open = !open; if(open) window.scrollTo({ top: 0, behavior: 'smooth' })"
+            :aria-expanded="open"
+            class="catalog-toggle"
+        >
+            <span class="catalog-line"></span>
+            <span class="catalog-label">{{ __('messages.catalog') }}</span>
+            <span class="catalog-line"></span>
+        </button>
 
         {{-- RIGHT: LANGUAGE SWITCHER + CONTACT (DESKTOP) --}}
         <div class="hidden lg:flex items-center gap-4">
             {{-- Language Switcher --}}
             <div class="flex items-center gap-1">
-                @php
-                    $currentLocale = app()->getLocale();
-                    $currentPath = request()->path();
-                    // Remove current locale prefix to get the path
-                    $pathWithoutLocale = preg_replace('#^(en|pl)/?#', '', $currentPath);
-                @endphp
-
                 <a href="/en/{{ $pathWithoutLocale }}"
                    class="lang-switch {{ $currentLocale === 'en' ? 'active' : '' }}"
                    aria-label="Switch to English">
@@ -58,11 +85,11 @@
             </div>
 
             {{-- Wishlist Heart + Dropdown Anchor --}}
-            <div class="relative">
+            <div class="relative flex items-center">
                 <button
                     type="button"
                     @click="$store.wishlist.togglePanel()"
-                    class="relative text-white/70 hover:text-amber-400 transition"
+                    class="relative flex items-center text-white/70 hover:text-amber-400 transition"
                     aria-label="{{ __('messages.wishlist') }}"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -92,14 +119,29 @@
             </button>
         </div>
 
-        {{-- MOBILE: WISHLIST + CONTACT + HAMBURGER --}}
+        {{-- MOBILE: LANG SWITCHER + WISHLIST + CONTACT + HAMBURGER --}}
         <div class="flex items-center gap-2 lg:hidden">
+            {{-- Mobile Language Switcher (compact) --}}
+            <div class="flex items-center gap-1">
+                <a href="/en/{{ $pathWithoutLocale }}"
+                   class="text-[11px] font-medium {{ $currentLocale === 'en' ? 'text-yellow-400' : 'text-white/50' }}"
+                   aria-label="Switch to English">
+                    EN
+                </a>
+                <span class="text-white/30 text-[10px]">/</span>
+                <a href="/pl/{{ $pathWithoutLocale }}"
+                   class="text-[11px] font-medium {{ $currentLocale === 'pl' ? 'text-yellow-400' : 'text-white/50' }}"
+                   aria-label="Switch to Polish">
+                    PL
+                </a>
+            </div>
+
             {{-- Wishlist Heart + Dropdown Anchor (mobile) --}}
-            <div class="relative">
+            <div class="relative flex items-center">
                 <button
                     type="button"
                     @click="$store.wishlist.togglePanel()"
-                    class="relative text-white/70 hover:text-amber-400 transition"
+                    class="relative flex items-center text-white/70 hover:text-amber-400 transition"
                     aria-label="{{ __('messages.wishlist') }}"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -130,12 +172,17 @@
 
             <button
                 type="button"
-                @click="mobile = true"
+                @click="mobile = !mobile"
                 class="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-white/10"
-                aria-label="Open menu"
+                :aria-label="mobile ? 'Close menu' : 'Open menu'"
             >
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                {{-- Hamburger icon (shown when closed) --}}
+                <svg x-show="!mobile" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                {{-- X icon (shown when open) --}}
+                <svg x-show="mobile" x-cloak class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M6 18L18 6" />
                 </svg>
             </button>
         </div>
@@ -185,28 +232,7 @@
         aria-label="Catalog navigation"
     >
         <header class="flex h-14 items-center justify-between border-b border-white/10 px-4">
-            <div class="flex items-center gap-4">
-                <span class="text-xs font-semibold tracking-[0.32em] uppercase text-slate-200">{{ __('messages.catalog') }}</span>
-
-                {{-- Mobile Language Switcher --}}
-                <div class="flex items-center gap-1">
-                    @php
-                        $currentLocale = app()->getLocale();
-                        $currentPath = request()->path();
-                        $pathWithoutLocale = preg_replace('#^(en|pl)/?#', '', $currentPath);
-                    @endphp
-
-                    <a href="/en/{{ $pathWithoutLocale }}"
-                       class="text-xs font-medium {{ $currentLocale === 'en' ? 'text-yellow-400' : 'text-white/50 hover:text-white' }}">
-                        EN
-                    </a>
-                    <span class="text-white/30 text-xs">/</span>
-                    <a href="/pl/{{ $pathWithoutLocale }}"
-                       class="text-xs font-medium {{ $currentLocale === 'pl' ? 'text-yellow-400' : 'text-white/50 hover:text-white' }}">
-                        PL
-                    </a>
-                </div>
-            </div>
+            <span class="text-xs font-semibold tracking-[0.32em] uppercase text-slate-200">{{ __('messages.catalog') }}</span>
 
             <button
                 type="button"
@@ -221,11 +247,12 @@
         </header>
 
         <div class="mobile-scroll gold-scroll p-6 space-y-6">
-            <div class="mega-tabs">
+            {{-- Gender toggle tabs --}}
+            <div class="mega-genders">
                 <button
                     type="button"
                     @click="gender = 'women'"
-                    :class="['mega-gender', gender === 'women' ? 'active' : '']"
+                    :class="gender === 'women' ? 'is-active' : ''"
                 >
                     {{ __('messages.women') }}
                 </button>
@@ -233,18 +260,24 @@
                 <button
                     type="button"
                     @click="gender = 'men'"
-                    :class="['mega-gender', gender === 'men' ? 'active' : '']"
+                    :class="gender === 'men' ? 'is-active' : ''"
                 >
                     {{ __('messages.men') }}
                 </button>
             </div>
 
-            <div x-show="gender === 'women'" x-transition.opacity class="space-y-6">
-                @include('catalog.mega', ['gender' => 'women'])
+            {{-- Women categories --}}
+            <div x-show="gender === 'women'" x-transition.opacity class="space-y-4">
+                <div class="mega-grid mobile-mega-grid">
+                    @include('catalog._sections', ['sections' => $womenSections])
+                </div>
             </div>
 
-            <div x-show="gender === 'men'" x-transition.opacity class="space-y-6">
-                @include('catalog.mega', ['gender' => 'men'])
+            {{-- Men categories --}}
+            <div x-show="gender === 'men'" x-transition.opacity class="space-y-4">
+                <div class="mega-grid mobile-mega-grid">
+                    @include('catalog._sections', ['sections' => $menSections])
+                </div>
             </div>
         </div>
     </section>
