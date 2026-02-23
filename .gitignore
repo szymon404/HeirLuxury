@@ -18,6 +18,8 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/app/public/imports/
+/storage/app/public/thumbnails/
 /vendor
 Homestead.json
 Homestead.yaml
@@ -26,4 +28,3 @@ Thumbs.db
 *.crt
 *.pfx
 /.claude
-/storage/framework/views/
