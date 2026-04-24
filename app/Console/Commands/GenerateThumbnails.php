@@ -135,6 +135,9 @@ class GenerateThumbnails extends Command
                 }
 
                 $progressBar->advance();
+
+                // Free memory between product directories
+                gc_collect_cycles();
             }
 
             $progressBar->finish();

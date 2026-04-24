@@ -42,6 +42,10 @@ class ImportController extends Controller
             $options['--skip-thumbnails'] = true;
         }
 
+        if ($request->filled('folder')) {
+            $options['--folder'] = $request->input('folder');
+        }
+
         Artisan::call('import:lv', $options);
 
         $output = Artisan::output();

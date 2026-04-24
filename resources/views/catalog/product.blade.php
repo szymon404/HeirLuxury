@@ -19,20 +19,8 @@
         <div class="space-y-6 text-white">
             <h1 class="text-3xl font-bold">{{ $product->name }}</h1>
 
-            <p class="text-white/70 text-sm">
-                <strong>Brand:</strong> {{ $product->brand ?? 'Louis Vuitton' }}<br>
-                <strong>Section:</strong> {{ $product->section ?? Str::headline($product->category_slug ?? 'Bags') }}
-            </p>
 
-           
 
-            <button
-                type="button"
-                x-data
-                @click="$dispatch('open-contact-modal')"
-                class="inline-flex items-center rounded-full bg-amber-400 text-black px-5 py-2 text-sm font-medium hover:bg-amber-300 transition">
-                Contact Us
-            </button>
         </div>
     </div>
 

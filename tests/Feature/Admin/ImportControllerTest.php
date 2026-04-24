@@ -106,7 +106,10 @@ class ImportControllerTest extends TestCase
         Storage::disk('public')->put('imports/lv-bags-women/Test Product/0000.jpg', 'fake-image-data');
 
         $response = $this->actingAs($this->admin)
-            ->post(route('admin.import.run'), ['skip_thumbnails' => '1']);
+            ->post(route('admin.import.run'), [
+                'skip_thumbnails' => '1',
+                'folder' => 'lv-bags-women',
+            ]);
 
         $response->assertRedirect(route('admin.import.index'));
         $response->assertSessionHas('status');
@@ -121,7 +124,11 @@ class ImportControllerTest extends TestCase
         Storage::disk('public')->put('imports/lv-bags-women/Fresh Product/0000.jpg', 'fake-image-data');
 
         $this->actingAs($this->admin)
-            ->post(route('admin.import.run'), ['fresh' => '1', 'skip_thumbnails' => '1']);
+            ->post(route('admin.import.run'), [
+                'fresh' => '1',
+                'skip_thumbnails' => '1',
+                'folder' => 'lv-bags-women',
+            ]);
 
         // The 5 factory products should be gone, replaced by imported one
         $this->assertEquals(1, Product::count());
@@ -137,7 +144,10 @@ class ImportControllerTest extends TestCase
         Storage::disk('public')->put('imports/lv-bags-women/Import Product/0000.jpg', 'fake-image-data');
 
         $this->actingAs($this->admin)
-            ->post(route('admin.import.run'), ['skip_thumbnails' => '1']);
+            ->post(route('admin.import.run'), [
+                'skip_thumbnails' => '1',
+                'folder' => 'lv-bags-women',
+            ]);
 
         $this->assertDatabaseHas('products', ['name' => 'Existing']);
         $this->assertDatabaseHas('products', ['name' => 'Import Product']);
