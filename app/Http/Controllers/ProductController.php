@@ -188,8 +188,10 @@ class ProductController extends Controller
         // Brand prefix mapping
         $brandPrefixes = [
             'louis-vuitton' => 'lv',
+            'amiri' => 'amiri',
             'chanel' => 'chanel',
             'dior' => 'dior',
+            'gucci' => 'gucci',
             'hermes' => 'hermes',
             'celine' => 'celine',
             'givenchy' => 'givenchy',
@@ -197,6 +199,7 @@ class ProductController extends Controller
             'moncler' => 'moncler',
             'nike' => 'nike',
             'offwhite' => 'offwhite',
+            'philipp-plein' => 'philippplein',
             'versace' => 'versace',
             'yeezy' => 'yeezy',
         ];

@@ -28,5 +28,24 @@
     {{-- contact modal --}}
     @include('contact.modal')
 
+    {{-- Mobile scroll-to-top button --}}
+    <button
+        x-data="{ visible: false }"
+        x-on:scroll.window.passive="visible = window.scrollY > 400"
+        x-show="visible"
+        x-transition.opacity.duration.200ms
+        x-cloak
+        @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
+        type="button"
+        class="fixed bottom-6 right-6 z-50 lg:hidden w-12 h-12 flex items-center justify-center
+               rounded-full bg-amber-400 text-black shadow-lg shadow-amber-400/30
+               active:scale-95 transition-transform"
+        aria-label="Scroll to top"
+    >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+        </svg>
+    </button>
+
 </body>
 </html>

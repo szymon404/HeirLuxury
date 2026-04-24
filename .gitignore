@@ -28,3 +28,4 @@ Thumbs.db
 *.crt
 *.pfx
 /.claude
+/CLAUDE.md

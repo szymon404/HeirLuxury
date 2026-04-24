@@ -44,7 +44,10 @@ class ImportLV extends Command
 {
     protected $signature = 'import:lv
                             {--fresh : Delete existing products first}
-                            {--skip-thumbnails : Skip thumbnail generation}';
+                            {--skip-thumbnails : Skip thumbnail generation}
+                            {--start-from= : Resume from this category folder (e.g. dior-shoes-men)}
+                            {--only= : Only import categories matching this brand prefix (e.g. lv,celine)}
+                            {--folder= : Import exactly one category folder (e.g. lv-bags-women)}';
 
     protected $description = 'Import luxury product folders into the database';
 
@@ -96,26 +99,58 @@ class ImportLV extends Command
         });
 
         $totalImported = 0;
+        $startFrom = $this->option('start-from');
+        $started = $startFrom === null;
+        $only = $this->option('only')
+            ? array_map('trim', explode(',', strtolower($this->option('only'))))
+            : null;
+        $onlyFolder = $this->option('folder');
 
         foreach ($folders as $folder) {
-            // Parse folder name: {brand}-{section}-{gender}
-            // e.g., "lv-bags-women", "chanel-shoes-men", "hermes-belts-women"
-            $parsed = $this->parseFolderName($folder);
+            // Scope to exactly one folder when --folder= is supplied.
+            if ($onlyFolder !== null && $folder !== $onlyFolder) {
+                continue;
+            }
 
-            if (! $parsed) {
+            // Filter by --only brands
+            if ($only) {
+                $match = false;
+                foreach ($only as $prefix) {
+                    if (str_starts_with(strtolower($folder), $prefix.'-')) {
+                        $match = true;
+                        break;
+                    }
+                }
+                if (! $match) {
+                    continue;
+                }
+            }
+
+            if (! $started) {
+                if ($folder === $startFrom) {
+                    $started = true;
+                } else {
+                    $this->line("⏭ Skipping: $folder (before --start-from)");
+
+                    continue;
+                }
+            }
+            // Parse folder name: {brand}-{section}-{gender}
+            // e.g., "lv-bags-women", "chanel-shoes-men", "lv-belts-unisex"
+            // Unisex folders expand to two entries (men + women slugs) so the
+            // same product appears in both catalogs.
+            $parsedList = $this->parseFolderName($folder);
+
+            if (empty($parsedList)) {
                 $this->warn("Skipping unrecognized folder: $folder");
 
                 continue;
             }
 
-            $categorySlug = $parsed['category_slug'];
-            $brand = $parsed['brand'];
-            $gender = $parsed['gender'];
-            $section = $parsed['section'];
-
+            $categoryDisplay = implode(', ', array_column($parsedList, 'category_slug'));
             $path = "$base/$folder";
 
-            $this->info("📂 Importing: $folder → $categorySlug");
+            $this->info("📂 Importing: $folder → $categoryDisplay");
 
             $folderCount = 0;
 
@@ -149,28 +184,34 @@ class ImportLV extends Command
                 $imagePath = "imports/$folder/$dir/$firstImage";
 
                 /*
-                 * Create or update the product record.
+                 * Create or update one Product row per parsed category.
                  *
                  * Uses category_slug + name as the unique key to prevent duplicates
                  * while allowing the same product name in different categories.
+                 * For unisex folders this writes two rows (one per gender slug),
+                 * each tagged with the matching binary gender.
                  */
-                Product::updateOrCreate(
-                    [
-                        'category_slug' => $categorySlug,
-                        'name' => $dir,
-                    ],
-                    [
-                        'slug' => Str::slug($dir),
-                        'folder' => $dir,
-                        'brand' => $brand,
-                        'gender' => $gender,
-                        'section' => $section,
-                        'image' => $firstImage,
-                        'image_path' => $imagePath,
-                    ]
-                );
+                foreach ($parsedList as $parsed) {
+                    Product::updateOrCreate(
+                        [
+                            'category_slug' => $parsed['category_slug'],
+                            'name' => $dir,
+                        ],
+                        [
+                            'slug' => Str::slug($dir),
+                            'folder' => $dir,
+                            'brand' => $parsed['brand'],
+                            'gender' => $parsed['gender'],
+                            'section' => $parsed['section'],
+                            'image' => $firstImage,
+                            'image_path' => $imagePath,
+                        ]
+                    );
+                }
 
-                // Generate optimized thumbnails for all images unless skipped
+                // Generate optimized thumbnails for all images unless skipped.
+                // Thumbnails live at the image path, not the category, so we
+                // generate once even when the product is duplicated across slugs.
                 if (! $this->option('skip-thumbnails')) {
                     foreach ($images as $img) {
                         $imgPath = "imports/$folder/$dir/$img";
@@ -180,6 +221,9 @@ class ImportLV extends Command
 
                 $folderCount++;
                 $totalImported++;
+
+                // Free memory between products
+                gc_collect_cycles();
             }
 
             $this->info("  ✔ Imported $folderCount products");
@@ -192,36 +236,53 @@ class ImportLV extends Command
     }
 
     /**
-     * Parse folder name into brand, section, gender, and category_slug.
+     * Parse folder name into one or more {brand, section, gender, category_slug}
+     * entries.
      *
      * Supports formats:
-     * - {brand}-{section}-{gender} (e.g., lv-bags-women, chanel-shoes-men)
+     * - {brand}-{section}-{gender} where gender ∈ {men, women, unisex}
+     *   (e.g., lv-bags-women, chanel-shoes-men, lv-belts-unisex)
+     *
+     * Returns:
+     * - Empty array if the folder name does not match the expected pattern.
+     * - A single-entry list for men/women folders.
+     * - A two-entry list for unisex folders — one with gender='men' and one
+     *   with gender='women' — so that unisex products are duplicated into
+     *   both catalogs (the taxonomy has no first-class `unisex` gender).
+     *
+     * @return array<int, array{brand:string, section:string, gender:string, category_slug:string, folder:string}>
      */
-    protected function parseFolderName(string $folder): ?array
+    public function parseFolderName(string $folder): array
     {
-        // Pattern: brand-section-gender
-        // e.g., lv-bags-women, chanel-shoes-men, hermes-belts-women
-        if (! preg_match('/^([a-z]+)-([a-z]+)-(women|men)$/i', $folder, $matches)) {
-            return null;
+        // Pattern: brand-section-gender (lowercase, ASCII-only)
+        if (! preg_match('/^([a-z]+)-([a-z]+)-(women|men|unisex)$/', $folder, $matches)) {
+            return [];
         }
 
-        $brandPrefix = strtolower($matches[1]);
-        $section = strtolower($matches[2]);
-        $gender = strtolower($matches[3]);
+        $brandPrefix = $matches[1];
+        $section = $matches[2];
+        $gender = $matches[3];
 
         // Map brand prefix to full brand name
         $brand = $this->brandMap[$brandPrefix] ?? $brandPrefix;
 
-        // Build category_slug: {brand}-{gender}-{section}
-        // e.g., louis-vuitton-women-bags, chanel-men-shoes
-        $categorySlug = "{$brand}-{$gender}-{$section}";
+        // Unisex expands into both men and women entries; binary genders
+        // produce a single entry.
+        $targetGenders = $gender === 'unisex' ? ['men', 'women'] : [$gender];
 
-        return [
-            'brand' => $brand,
-            'section' => $section,
-            'gender' => $gender,
-            'category_slug' => $categorySlug,
-            'folder' => $folder,
-        ];
+        $entries = [];
+        foreach ($targetGenders as $targetGender) {
+            // Build category_slug: {brand}-{gender}-{section}
+            // e.g., louis-vuitton-women-bags, chanel-men-shoes
+            $entries[] = [
+                'brand' => $brand,
+                'section' => $section,
+                'gender' => $targetGender,
+                'category_slug' => "{$brand}-{$targetGender}-{$section}",
+                'folder' => $folder,
+            ];
+        }
+
+        return $entries;
     }
 }

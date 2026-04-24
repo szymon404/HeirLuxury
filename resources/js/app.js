@@ -21,12 +21,18 @@ window.inquiryModal = function (config) {
             message: "",
         },
         init() {
-            window.addEventListener("open-inquiry-modal", (e) => {
+            this._openHandler = (e) => {
                 if (e.detail?.product) {
                     this.product = e.detail.product;
                 }
                 this.open = true;
-            });
+            };
+            window.addEventListener("open-inquiry-modal", this._openHandler);
+        },
+        destroy() {
+            if (this._openHandler) {
+                window.removeEventListener("open-inquiry-modal", this._openHandler);
+            }
         },
         close() {
             this.open = false;

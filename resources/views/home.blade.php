@@ -49,6 +49,7 @@ document.addEventListener('alpine:init', () => {
         bgLogoVisible: false,
         scrollCueVisible: false,
         scrollHandler: null,
+        _timers: [],
 
         start() {
             // Ensure page starts at top so collections panel doesn't peek
@@ -69,20 +70,20 @@ document.addEventListener('alpine:init', () => {
             sessionStorage.setItem('hl_visited', 'true');
 
             // Phase 1: Background logo fades in
-            setTimeout(() => {
+            this._timers.push(setTimeout(() => {
                 this.bgLogoVisible = true;
-            }, 300);
+            }, 300));
 
             // Phase 2: Navbar drops in
-            setTimeout(() => {
+            this._timers.push(setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('intro-navbar-reveal'));
-            }, 1400);
+            }, 1400));
 
             // Phase 3: Scroll indicator appears
-            setTimeout(() => {
+            this._timers.push(setTimeout(() => {
                 this.scrollCueVisible = true;
                 this.bindScrollDismiss();
-            }, 2000);
+            }, 2000));
         },
 
         bindScrollDismiss() {
@@ -91,9 +92,19 @@ document.addEventListener('alpine:init', () => {
                 if (window.scrollY > 80) {
                     this.scrollCueVisible = false;
                     window.removeEventListener('scroll', this.scrollHandler);
+                    this.scrollHandler = null;
                 }
             };
             window.addEventListener('scroll', this.scrollHandler, { passive: true });
+        },
+
+        destroy() {
+            this._timers.forEach(id => clearTimeout(id));
+            this._timers = [];
+            if (this.scrollHandler) {
+                window.removeEventListener('scroll', this.scrollHandler);
+                this.scrollHandler = null;
+            }
         }
     }));
 });

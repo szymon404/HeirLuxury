@@ -17,7 +17,6 @@ return [
 
         // ---- Bags ----
         'Bags' => [
-            ['name' => 'Celine Bags',         'route' => 'catalog.category', 'params' => ['category' => 'celine-women-bags']],
             ['name' => 'Chanel Bags',          'route' => 'catalog.category', 'params' => ['category' => 'chanel-women-bags']],
             ['name' => 'Dior Bags',            'route' => 'catalog.category', 'params' => ['category' => 'dior-women-bags']],
             ['name' => 'Givenchy Bags',        'route' => 'catalog.category', 'params' => ['category' => 'givenchy-women-bags']],
@@ -29,7 +28,6 @@ return [
         // ---- Shoes ----
         'Shoes' => [
             ['name' => 'Amiri Women Shoes',            'route' => 'catalog.category', 'params' => ['category' => 'amiri-women-shoes']],
-            ['name' => 'Celine Women Shoes',           'route' => 'catalog.category', 'params' => ['category' => 'celine-women-shoes']],
             ['name' => 'Chanel Women Shoes',           'route' => 'catalog.category', 'params' => ['category' => 'chanel-women-shoes']],
             ['name' => 'Dior Women Shoes',             'route' => 'catalog.category', 'params' => ['category' => 'dior-women-shoes']],
             ['name' => 'Givenchy Women Shoes',         'route' => 'catalog.category', 'params' => ['category' => 'givenchy-women-shoes']],
@@ -43,7 +41,6 @@ return [
         // ---- Clothing ----
         'Clothing' => [
             ['name' => 'Amiri Women Clothing',            'route' => 'catalog.category', 'params' => ['category' => 'amiri-women-clothes']],
-            ['name' => 'Celine Women Clothing',           'route' => 'catalog.category', 'params' => ['category' => 'celine-women-clothes']],
             ['name' => 'Chanel Women Clothing',           'route' => 'catalog.category', 'params' => ['category' => 'chanel-women-clothes']],
             ['name' => 'Dior Women Clothing',             'route' => 'catalog.category', 'params' => ['category' => 'dior-women-clothes']],
             ['name' => 'Givenchy Women Clothing',         'route' => 'catalog.category', 'params' => ['category' => 'givenchy-women-clothes']],
@@ -57,7 +54,6 @@ return [
         // ---- Belts ----
         'Belts' => [
             ['name' => 'Chanel Belts',          'route' => 'catalog.category', 'params' => ['category' => 'chanel-women-belts']],
-            ['name' => 'Louis Vuitton Belts',   'route' => 'catalog.category', 'params' => ['category' => 'louis-vuitton-women-belts']],
         ],
 
         // ---- Jewelry ----
@@ -74,7 +70,6 @@ return [
             ['name' => 'Chanel Glasses',        'route' => 'catalog.category', 'params' => ['category' => 'chanel-women-glasses']],
             ['name' => 'Dior Glasses',          'route' => 'catalog.category', 'params' => ['category' => 'dior-women-glasses']],
             ['name' => 'Gucci Glasses',         'route' => 'catalog.category', 'params' => ['category' => 'gucci-women-glasses']],
-            ['name' => 'Louis Vuitton Glasses', 'route' => 'catalog.category', 'params' => ['category' => 'louis-vuitton-women-glasses']],
             ['name' => 'Versace Glasses',       'route' => 'catalog.category', 'params' => ['category' => 'versace-women-glasses']],
         ],
     ],
@@ -85,7 +80,6 @@ return [
         // ---- Shoes ----
         'Shoes' => [
             ['name' => 'Amiri Men Shoes',              'route' => 'catalog.category', 'params' => ['category' => 'amiri-men-shoes']],
-            ['name' => 'Celine Men Shoes',             'route' => 'catalog.category', 'params' => ['category' => 'celine-men-shoes']],
             ['name' => 'Chanel Men Shoes',             'route' => 'catalog.category', 'params' => ['category' => 'chanel-men-shoes']],
             ['name' => 'Dior Men Shoes',               'route' => 'catalog.category', 'params' => ['category' => 'dior-men-shoes']],
             ['name' => 'Givenchy Men Shoes',           'route' => 'catalog.category', 'params' => ['category' => 'givenchy-men-shoes']],
@@ -103,7 +97,6 @@ return [
         // ---- Clothing ----
         'Clothing' => [
             ['name' => 'Amiri Men Clothing',              'route' => 'catalog.category', 'params' => ['category' => 'amiri-men-clothes']],
-            ['name' => 'Celine Men Clothing',             'route' => 'catalog.category', 'params' => ['category' => 'celine-men-clothes']],
             ['name' => 'Chanel Men Clothing',             'route' => 'catalog.category', 'params' => ['category' => 'chanel-men-clothes']],
             ['name' => 'Dior Men Clothing',               'route' => 'catalog.category', 'params' => ['category' => 'dior-men-clothes']],
             ['name' => 'Givenchy Men Clothing',           'route' => 'catalog.category', 'params' => ['category' => 'givenchy-men-clothes']],
