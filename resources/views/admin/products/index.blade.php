@@ -186,8 +186,22 @@
                         </td>
                         <td class="px-4 py-3">
                             @if($product->image)
-                                <img src="{{ asset('storage/'.$product->image) }}"
+                                @php
+                                    // Route admin list thumbnails through ThumbnailService so the
+                                    // table loads small WebPs (~5 KB) instead of the original
+                                    // multi-MB JPEGs. The 'thumb' size (96x96) matches the
+                                    // h-10 w-10 (40x40) display, including retina (~80px).
+                                    $imagePath = $product->image_path ?? $product->image;
+                                    $adminThumbUrl = app(\App\Services\ThumbnailService::class)
+                                        ->getUrl($imagePath, 'thumb')
+                                        ?? asset('storage/' . $imagePath);
+                                @endphp
+                                <img src="{{ $adminThumbUrl }}"
                                      alt="{{ $product->name }}"
+                                     width="96"
+                                     height="96"
+                                     loading="lazy"
+                                     decoding="async"
                                      class="h-10 w-10 rounded-lg object-cover">
                             @else
                                 <div class="h-10 w-10 rounded-lg bg-zinc-800 flex items-center justify-center">

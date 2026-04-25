@@ -71,9 +71,22 @@
                      @dragend="handleDragEnd()">
 
                     {{-- Image --}}
+                    @php
+                        // Route admin gallery tiles through ThumbnailService so the
+                        // grid loads optimized WebPs instead of the full originals.
+                        // 'gallery' (800x800) matches the aspect-square container and
+                        // looks crisp on retina at the rendered ~200-250px tile size.
+                        $galleryTileUrl = app(\App\Services\ThumbnailService::class)
+                            ->getUrl($image->path, 'gallery')
+                            ?? asset('storage/' . $image->path);
+                    @endphp
                     <div class="aspect-square bg-zinc-800">
-                        <img src="{{ asset('storage/' . $image->path) }}"
+                        <img src="{{ $galleryTileUrl }}"
                              alt="{{ $image->alt_text ?? $product->name }}"
+                             width="800"
+                             height="800"
+                             loading="lazy"
+                             decoding="async"
                              class="w-full h-full object-cover">
                     </div>
 
