@@ -13,7 +13,7 @@
 >
     {{-- Background monogram logo --}}
     <img
-        src="{{ asset('img/hl-logo-panel.png') }}"
+        src="{{ asset('img/hl-logo-panel.webp') }}"
         alt=""
         aria-hidden="true"
         :class="bgLogoVisible ? 'is-visible' : ''"
@@ -131,7 +131,7 @@ document.addEventListener('alpine:init', () => {
         {{-- HL Logo --}}
         <div class="mb-6 text-center">
             <img
-                src="{{ asset('img/hl-logo-panel.png') }}"
+                src="{{ asset('img/hl-logo-panel.webp') }}"
                 alt="Heir Luxury"
                 class="w-20 h-20 mx-auto object-contain"
             >
