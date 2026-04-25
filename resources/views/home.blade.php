@@ -14,6 +14,7 @@
     {{-- Background monogram logo --}}
     <img
         src="{{ asset('img/hl-logo-panel.webp') }}"
+        srcset="{{ asset('img/hl-logo-panel.webp') }} 1x, {{ asset('img/hl-logo-panel@2x.webp') }} 2x"
         alt=""
         aria-hidden="true"
         :class="bgLogoVisible ? 'is-visible' : ''"
@@ -132,6 +133,7 @@ document.addEventListener('alpine:init', () => {
         <div class="mb-6 text-center">
             <img
                 src="{{ asset('img/hl-logo-panel.webp') }}"
+                srcset="{{ asset('img/hl-logo-panel.webp') }} 1x, {{ asset('img/hl-logo-panel@2x.webp') }} 2x"
                 alt="Heir Luxury"
                 class="w-20 h-20 mx-auto object-contain"
             >
