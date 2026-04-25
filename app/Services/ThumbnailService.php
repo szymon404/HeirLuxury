@@ -56,6 +56,7 @@ class ThumbnailService
      */
     public const SIZES = [
         'card' => ['width' => 400, 'height' => 300, 'quality' => 80],
+        'card_2x' => ['width' => 800, 'height' => 600, 'quality' => 80],
         'gallery' => ['width' => 800, 'height' => 800, 'quality' => 85],
         'thumb' => ['width' => 96,  'height' => 96,  'quality' => 75],
     ];
@@ -343,6 +344,49 @@ class ThumbnailService
 
         return $this->getUrl($originalPath, 'card')
             ?? $storage->url($originalPath);
+    }
+
+    /**
+     * Build a `srcset` value pairing the 1x and 2x variants of a size.
+     *
+     * Convention: a size named `{base}` is paired with `{base}_2x` if that
+     * companion exists in SIZES. Sizes without a `_2x` companion (e.g.
+     * `thumb`, `gallery`) return null — the caller should fall back to a
+     * plain `src` attribute.
+     *
+     * Returns null when:
+     * - The base size is unknown.
+     * - There is no registered `_2x` companion.
+     * - Either thumbnail cannot be resolved (no original on disk to
+     *   generate from, no existing thumbnail).
+     *
+     * Example output:
+     *   "/storage/thumbnails/card/lv-bags-women/Bag/0000.webp 1x,
+     *    /storage/thumbnails/card_2x/lv-bags-women/Bag/0000.webp 2x"
+     *
+     * @param  string  $originalPath  Relative path to original image
+     * @param  string  $size  Base size key (e.g. 'card')
+     * @return string|null `"url1x 1x, url2x 2x"` or null if pairing impossible
+     */
+    public function getSrcset(string $originalPath, string $size = 'card'): ?string
+    {
+        if (! isset(self::SIZES[$size])) {
+            return null;
+        }
+
+        $retinaSize = $size.'_2x';
+        if (! isset(self::SIZES[$retinaSize])) {
+            return null;
+        }
+
+        $url1x = $this->getUrl($originalPath, $size);
+        $url2x = $this->getUrl($originalPath, $retinaSize);
+
+        if ($url1x === null || $url2x === null) {
+            return null;
+        }
+
+        return "{$url1x} 1x, {$url2x} 2x";
     }
 
     /**

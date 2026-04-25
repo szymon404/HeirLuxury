@@ -57,6 +57,9 @@
                 @click="lightbox = true"
                 class="block w-full h-full rounded-2xl overflow-hidden border border-white/10 bg-black/40 cursor-zoom-in"
             >
+                {{-- Hero is the LCP candidate; fetchpriority="high" tells the
+                     browser to prioritize it. Do NOT add loading="lazy" here —
+                     lazy on above-the-fold imagery actively hurts LCP. --}}
                 <img
                     x-ref="heroImg"
                     :src="images[idx]?.src"
@@ -65,6 +68,7 @@
                     height="800"
                     class="w-full h-full object-cover"
                     decoding="async"
+                    fetchpriority="high"
                 >
             </button>
 

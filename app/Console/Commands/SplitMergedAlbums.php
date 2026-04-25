@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 
 use App\Models\Product;
 use App\Services\ThumbnailService;
+use App\Support\BrandRegistry;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
@@ -37,27 +38,6 @@ class SplitMergedAlbums extends Command
                             {--skip-thumbnails : Skip thumbnail generation for new folders}';
 
     protected $description = 'Split Yupoo scraper albums that merged multiple products into one folder';
-
-    /**
-     * Brand name mapping from folder prefix to full brand name.
-     * Identical to ImportLV::$brandMap.
-     */
-    protected array $brandMap = [
-        'lv' => 'louis-vuitton',
-        'chanel' => 'chanel',
-        'dior' => 'dior',
-        'gucci' => 'gucci',
-        'amiri' => 'amiri',
-        'celine' => 'celine',
-        'givenchy' => 'givenchy',
-        'mcqueen' => 'mcqueen',
-        'moncler' => 'moncler',
-        'nike' => 'nike',
-        'offwhite' => 'offwhite',
-        'philippplein' => 'philipp-plein',
-        'versace' => 'versace',
-        'yeezy' => 'yeezy',
-    ];
 
     public function handle(ThumbnailService $thumbnailService): int
     {
@@ -458,7 +438,7 @@ class SplitMergedAlbums extends Command
         $section = strtolower($matches[2]);
         $gender = strtolower($matches[3]);
 
-        $brand = $this->brandMap[$brandPrefix] ?? $brandPrefix;
+        $brand = BrandRegistry::prefixToSlug($brandPrefix) ?? $brandPrefix;
         $categorySlug = "{$brand}-{$gender}-{$section}";
 
         return [

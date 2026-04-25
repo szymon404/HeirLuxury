@@ -220,4 +220,69 @@ class ThumbnailServiceTest extends TestCase
             $this->assertFalse($success, "Size '{$size}' should fail for nonexistent image");
         }
     }
+
+    // ==================== card_2x + srcset ====================
+
+    /**
+     * Retina/HiDPI variant must exist in SIZES so generateAll/getSrcset
+     * can pair it with the 1x card thumbnail.
+     */
+    public function test_card_2x_size_is_registered(): void
+    {
+        $this->assertArrayHasKey('card_2x', ThumbnailService::SIZES);
+        $this->assertSame(800, ThumbnailService::SIZES['card_2x']['width']);
+        $this->assertSame(600, ThumbnailService::SIZES['card_2x']['height']);
+    }
+
+    /**
+     * getSrcset() returns null for unknown sizes (mirrors getUrl behaviour).
+     */
+    public function test_get_srcset_returns_null_for_invalid_size(): void
+    {
+        Storage::fake('public');
+        $this->assertNull($this->service->getSrcset('any/image.jpg', 'invalid'));
+    }
+
+    /**
+     * No 2x companion size → no srcset is meaningful, return null.
+     * The blade falls back to plain src in that case.
+     */
+    public function test_get_srcset_returns_null_when_no_2x_companion(): void
+    {
+        Storage::fake('public');
+        // 'thumb' has no 'thumb_2x' counterpart by design — small images don't need retina
+        $this->assertNull($this->service->getSrcset('any/image.jpg', 'thumb'));
+    }
+
+    /**
+     * When neither thumbnail can be resolved (no original on disk either),
+     * srcset is null so the blade omits the attribute entirely.
+     */
+    public function test_get_srcset_returns_null_when_thumbnails_cannot_be_resolved(): void
+    {
+        Storage::fake('public');
+        $this->assertNull($this->service->getSrcset('imports/missing/Product/0000.jpg', 'card'));
+    }
+
+    /**
+     * Happy path: both thumbnails exist on disk → srcset string pairs them
+     * with the appropriate density descriptors.
+     */
+    public function test_get_srcset_pairs_1x_and_2x_when_both_thumbnails_exist(): void
+    {
+        Storage::fake('public');
+        $disk = Storage::disk('public');
+
+        // Pre-place both thumbnails so getUrl() does not need to generate.
+        $disk->put('thumbnails/card/folder/Product/0000.webp', 'fake-1x');
+        $disk->put('thumbnails/card_2x/folder/Product/0000.webp', 'fake-2x');
+
+        $srcset = $this->service->getSrcset('imports/folder/Product/0000.jpg', 'card');
+
+        $this->assertNotNull($srcset);
+        $this->assertStringContainsString('1x', $srcset);
+        $this->assertStringContainsString('2x', $srcset);
+        $this->assertStringContainsString('thumbnails/card/', $srcset);
+        $this->assertStringContainsString('thumbnails/card_2x/', $srcset);
+    }
 }
