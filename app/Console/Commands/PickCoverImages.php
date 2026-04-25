@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 
 use App\Models\Product;
 use App\Services\ThumbnailService;
+use App\Support\BrandRegistry;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
@@ -274,26 +275,10 @@ class PickCoverImages extends Command
      */
     protected function resolveImportFolder(Product $product, $storage): ?string
     {
-        $brandPrefixes = [
-            'louis-vuitton' => 'lv',
-            'chanel' => 'chanel',
-            'dior' => 'dior',
-            'hermes' => 'hermes',
-            'gucci' => 'gucci',
-            'amiri' => 'amiri',
-            'givenchy' => 'givenchy',
-            'mcqueen' => 'mcqueen',
-            'moncler' => 'moncler',
-            'nike' => 'nike',
-            'offwhite' => 'offwhite',
-            'versace' => 'versace',
-            'yeezy' => 'yeezy',
-            'philipp-plein' => 'philippplein',
-        ];
-
         $categorySlug = $product->category_slug;
 
-        foreach ($brandPrefixes as $brand => $prefix) {
+        // Iterate the canonical prefix → slug map (config/brands.php).
+        foreach (BrandRegistry::all() as $prefix => $brand) {
             if (str_starts_with($categorySlug, "{$brand}-")) {
                 $rest = substr($categorySlug, strlen("{$brand}-"));
                 if (preg_match('/^(women|men)-(.+)$/', $rest, $matches)) {

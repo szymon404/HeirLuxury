@@ -6,6 +6,7 @@
     use Illuminate\Support\Facades\Storage;
     use Illuminate\Support\Facades\Route;
     use App\Services\ThumbnailService;
+    use App\Support\BrandRegistry;
 
     $prod = $product ?? $item ?? $p;
     if (! $prod) {
@@ -33,28 +34,11 @@
     }
 
     // === Thumbnail image resolution ===
-    // Dynamically resolve category_slug ({brand}-{gender}-{section}) to storage folder ({prefix}-{section}-{gender})
+    // Translate category_slug ({brand}-{gender}-{section}) to the on-disk import folder ({prefix}-{section}-{gender}).
+    // Brand prefixes live in config/brands.php — see App\Support\BrandRegistry.
     $baseFolder = null;
-    $brandPrefixes = [
-        'louis-vuitton' => 'lv',
-        'amiri'         => 'amiri',
-        'chanel'        => 'chanel',
-        'dior'          => 'dior',
-        'gucci'         => 'gucci',
-        'hermes'        => 'hermes',
-        'celine'        => 'celine',
-        'givenchy'      => 'givenchy',
-        'mcqueen'       => 'mcqueen',
-        'moncler'       => 'moncler',
-        'nike'          => 'nike',
-        'offwhite'      => 'offwhite',
-        'philipp-plein' => 'philippplein',
-        'versace'       => 'versace',
-        'yeezy'         => 'yeezy',
-    ];
-
     if ($categorySlug) {
-        foreach ($brandPrefixes as $brand => $prefix) {
+        foreach (BrandRegistry::all() as $prefix => $brand) {
             if (str_starts_with($categorySlug, "{$brand}-")) {
                 $rest = substr($categorySlug, strlen("{$brand}-"));
                 if (preg_match('/^(women|men)-(.+)$/', $rest, $matches)) {
@@ -69,6 +53,9 @@
 
     $folder    = $val('folder');
     $imageName = $val('image');
+
+    // Default: no srcset (custom thumbnail or placeholder fallthrough).
+    $srcset = null;
 
     // 0) Prefer custom thumbnail (already WebP, already sized for card)
     $customThumbnail = $val('thumbnail');
@@ -102,6 +89,8 @@
         if ($imagePath) {
             $img = $thumbnailService->getUrl($imagePath, 'card') ?? Storage::url($imagePath);
             $originalImg = Storage::url($imagePath);
+            // Pair 1x + 2x card variants for retina screens; null when either is unavailable.
+            $srcset = $thumbnailService->getSrcset($imagePath, 'card');
         } else {
             $img = asset('assets/placeholders/product-dark.png');
             $originalImg = $img;
@@ -119,6 +108,10 @@
         <div class="aspect-[4/3] bg-black/40 relative overflow-hidden">
             <img
                 src="{{ $img }}"
+                @if ($srcset)
+                    srcset="{{ $srcset }}"
+                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                @endif
                 alt="{{ $alt }}"
                 width="400"
                 height="300"

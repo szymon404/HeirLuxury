@@ -212,6 +212,9 @@ document.addEventListener('alpine:init', () => {
                                 $img = $product->image_path
                                     ? ($thumbnailService->getUrl($product->image_path, 'card') ?? Storage::url($product->image_path))
                                     : asset('assets/placeholders/product-dark.png');
+                                $imgSrcset = $product->image_path
+                                    ? $thumbnailService->getSrcset($product->image_path, 'card')
+                                    : null;
                             @endphp
                             <div class="w-1/3 flex-shrink-0 px-2">
                                 <a href="{{ $productHref }}"
@@ -219,9 +222,16 @@ document.addEventListener('alpine:init', () => {
                                           hover:border-amber-400/80 transition duration-300">
                                     <img
                                         src="{{ $img }}"
+                                        @if ($imgSrcset)
+                                            srcset="{{ $imgSrcset }}"
+                                            sizes="33vw"
+                                        @endif
                                         alt="{{ $product->name }}"
+                                        width="400"
+                                        height="300"
                                         class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                                         loading="lazy"
+                                        decoding="async"
                                     >
                                 </a>
                             </div>

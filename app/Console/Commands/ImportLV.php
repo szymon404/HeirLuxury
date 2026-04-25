@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 
 use App\Models\Product;
 use App\Services\ThumbnailService;
+use App\Support\BrandRegistry;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
@@ -50,26 +51,6 @@ class ImportLV extends Command
                             {--folder= : Import exactly one category folder (e.g. lv-bags-women)}';
 
     protected $description = 'Import luxury product folders into the database';
-
-    /**
-     * Brand name mapping from folder prefix to full brand name.
-     */
-    protected array $brandMap = [
-        'lv' => 'louis-vuitton',
-        'chanel' => 'chanel',
-        'dior' => 'dior',
-        'gucci' => 'gucci',
-        'amiri' => 'amiri',
-        'celine' => 'celine',
-        'givenchy' => 'givenchy',
-        'mcqueen' => 'mcqueen',
-        'moncler' => 'moncler',
-        'nike' => 'nike',
-        'offwhite' => 'offwhite',
-        'philippplein' => 'philipp-plein',
-        'versace' => 'versace',
-        'yeezy' => 'yeezy',
-    ];
 
     /**
      * Execute the import process.
@@ -263,8 +244,10 @@ class ImportLV extends Command
         $section = $matches[2];
         $gender = $matches[3];
 
-        // Map brand prefix to full brand name
-        $brand = $this->brandMap[$brandPrefix] ?? $brandPrefix;
+        // Map brand prefix to full brand name (config/brands.php).
+        // Unknown prefixes pass through verbatim so a new brand still creates
+        // a usable Product row before its config entry is added.
+        $brand = BrandRegistry::prefixToSlug($brandPrefix) ?? $brandPrefix;
 
         // Unisex expands into both men and women entries; binary genders
         // produce a single entry.

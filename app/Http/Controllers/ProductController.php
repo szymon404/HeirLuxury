@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Services\CatalogCache;
 use App\Services\ThumbnailService;
+use App\Support\BrandRegistry;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -185,28 +186,10 @@ class ProductController extends Controller
      */
     protected function resolveStorageFolder(string $categorySlug): ?string
     {
-        // Brand prefix mapping
-        $brandPrefixes = [
-            'louis-vuitton' => 'lv',
-            'amiri' => 'amiri',
-            'chanel' => 'chanel',
-            'dior' => 'dior',
-            'gucci' => 'gucci',
-            'hermes' => 'hermes',
-            'celine' => 'celine',
-            'givenchy' => 'givenchy',
-            'mcqueen' => 'mcqueen',
-            'moncler' => 'moncler',
-            'nike' => 'nike',
-            'offwhite' => 'offwhite',
-            'philipp-plein' => 'philippplein',
-            'versace' => 'versace',
-            'yeezy' => 'yeezy',
-        ];
-
         // Parse: {brand}-{gender}-{section}
         // Examples: louis-vuitton-women-bags, chanel-men-shoes
-        foreach ($brandPrefixes as $brand => $prefix) {
+        // Brand prefix map lives in config/brands.php — see App\Support\BrandRegistry.
+        foreach (BrandRegistry::all() as $prefix => $brand) {
             if (str_starts_with($categorySlug, "{$brand}-")) {
                 $rest = substr($categorySlug, strlen("{$brand}-"));
                 // rest = "women-bags" or "men-shoes"
