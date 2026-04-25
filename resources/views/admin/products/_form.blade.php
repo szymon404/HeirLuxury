@@ -180,11 +180,23 @@
     </div>
 
     {{-- Sidebar Column --}}
+    @php
+        // Route preview thumbnails through ThumbnailService so the form
+        // sidebar loads a small WebP instead of the full original. 'card'
+        // (400x300 WebP) is plenty for the ~250-350px preview tile.
+        $thumbnailService = app(\App\Services\ThumbnailService::class);
+        $imagePreviewUrl = !empty($product->image)
+            ? ($thumbnailService->getUrl($product->image, 'card') ?? asset('storage/'.$product->image))
+            : '';
+        $thumbPreviewUrl = !empty($product->thumbnail)
+            ? ($thumbnailService->getUrl($product->thumbnail, 'card') ?? asset('storage/'.$product->thumbnail))
+            : '';
+    @endphp
     <div class="space-y-6">
         {{-- Image Upload --}}
         <div class="rounded-2xl border border-white/10 bg-zinc-900/60 p-6"
              x-data="{
-                imagePreview: '{{ !empty($product->image) ? asset('storage/'.$product->image) : '' }}',
+                imagePreview: '{{ $imagePreviewUrl }}',
                 fileName: '',
                 handleFileSelect(event) {
                     const file = event.target.files[0];
@@ -257,7 +269,7 @@
         {{-- Card Thumbnail Upload --}}
         <div class="rounded-2xl border border-white/10 bg-zinc-900/60 p-6"
              x-data="{
-                thumbPreview: '{{ !empty($product->thumbnail) ? asset('storage/'.$product->thumbnail) : '' }}',
+                thumbPreview: '{{ $thumbPreviewUrl }}',
                 thumbFileName: '',
                 handleThumbSelect(event) {
                     const file = event.target.files[0];
