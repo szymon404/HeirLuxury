@@ -167,19 +167,24 @@ class ImportLV extends Command
                 /*
                  * Create or update one Product row per parsed category.
                  *
-                 * Uses category_slug + name as the unique key to prevent duplicates
-                 * while allowing the same product name in different categories.
+                 * Keys on (category_slug, slug) — the same tuple the DB enforces
+                 * as UNIQUE — so case-different folder names that resolve to the
+                 * same slug (e.g. 'Gucci 0015' and 'GUCCI 0015') collapse into
+                 * one row instead of triggering a constraint violation. The
+                 * original case is preserved in `name` and `folder` for display.
                  * For unisex folders this writes two rows (one per gender slug),
                  * each tagged with the matching binary gender.
                  */
+                $productSlug = Str::slug($dir);
+
                 foreach ($parsedList as $parsed) {
                     Product::updateOrCreate(
                         [
                             'category_slug' => $parsed['category_slug'],
-                            'name' => $dir,
+                            'slug' => $productSlug,
                         ],
                         [
-                            'slug' => Str::slug($dir),
+                            'name' => $dir,
                             'folder' => $dir,
                             'brand' => $parsed['brand'],
                             'gender' => $parsed['gender'],
